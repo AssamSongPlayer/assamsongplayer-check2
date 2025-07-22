@@ -12,27 +12,18 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
-    // Only proceed when auth is fully initialized
-    if (!initialized) return
-
-    console.log('🔍 AuthWrapper - Auth initialized:', { 
-      user: user?.email || 'No user', 
-      loading, 
-      initialized 
-    })
-
-    if (!loading) {
+    if (initialized) {
       setAuthReady(true)
-      if (!user) {
+      if (!user && !loading) {
         setShowLogin(true)
-      } else {
+      } else if (user) {
         setShowLogin(false)
       }
     }
   }, [user, loading, initialized])
 
-  // Show loading spinner while auth is initializing or loading
-  if (!initialized || loading || !authReady) {
+  // Show loading spinner while auth is initializing
+  if (!authReady || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
