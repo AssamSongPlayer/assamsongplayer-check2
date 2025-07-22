@@ -11,10 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: 'implicit',
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'sb-fmuherccixmmotybpxcm-auth-token',
-    // Add these options for better session handling
     debug: false,
-    // Increase session refresh threshold
-    sessionRefreshMargin: 60, // Refresh 60 seconds before expiry
   },
   global: {
     headers: {
@@ -26,7 +23,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 2
     }
   },
-  // Add retry configuration for better reliability
   db: {
     schema: 'public'
   }
