@@ -107,6 +107,7 @@ function MusicPlayerContent() {
   useEffect(() => {
     // Only reset state when user explicitly logs out
     if (!user) {
+      console.log('🔄 User logged out, resetting app state...')
       setCurrentSong(null)
       setIsPlaying(false)
       setIsPlayerMaximized(false)
@@ -122,7 +123,7 @@ function MusicPlayerContent() {
       setLastPlayedSongDismissed(false)
       clearQueue()
     }
-  }, [user, clearQueue])
+  }, [user?.id, clearQueue]) // Only depend on user ID
 
 const loadMoreSongs = () => {
   setDisplayCount(prev => prev + 15);
