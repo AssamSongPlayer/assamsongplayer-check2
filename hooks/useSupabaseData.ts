@@ -3,6 +3,12 @@ import { Playlist, Song } from '@/types';
 import { User } from '@supabase/supabase-js';
 import { useEffect, useRef, useState } from 'react';
 
+// Global data state to prevent multiple data loads
+let globalDataState = {
+  isLoading: false,
+  lastUserId: null as string | null
+}
+
 export function useSupabaseData(user: User | null) {
   // Caches for songs and liked songs to avoid repeated cloud fetches
   const songsCache = useRef<any[] | null>(null);
@@ -170,21 +176,18 @@ export function useSupabaseData(user: User | null) {
   // Fetch all songs
   const fetchSongs = async () => {
     if (!user) {
-      console.log('🔄 No user, skipping songs fetch...')
       setSongs([])
-      setPersonalizedSongs([])
-      setTrendingSongs([])
       return
     }
     
     try {
-      console.log('🔄 Fetching all songs from supabase...');
+      console.log('Fetching all songs from supabase...');
       const { data: songsData, error } = await supabase
         .from('songs')
         .select('*')
         .order('views', { ascending: false })
       if (error) throw error
-      console.log('✅ Fetched songs:', songsData?.length);
+      console.log('Fetched songs:', songsData?.length);
 
       // Fetch liked songs
       let userLikedSongs = new Set<number>()
@@ -204,7 +207,7 @@ export function useSupabaseData(user: User | null) {
         .eq('user_id', user.id)
         .order('minutes_listened', { ascending: false })
       if (historyError) throw historyError
-      console.log('✅ Fetched user history:', historyData?.length);
+      console.log('Fetched user history:', historyData?.length);
 
       // Get top 15 most listened songs from history
       const topHistory = (historyData || []).slice(0, 15).filter(h => h.songs)
@@ -232,8 +235,8 @@ export function useSupabaseData(user: User | null) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([artist]) => artist);
-      console.log('✅ Found similar tags:', commonTags);
-      console.log('✅ Found similar artists:', commonArtists);
+      console.log('Found similar tags:', commonTags);
+      console.log('Found similar artists:', commonArtists);
 
       // Songs in history (to exclude for smart sort)
       const historySongIds = new Set((historyData || []).map(h => h.song_id?.toString()));
@@ -272,7 +275,7 @@ export function useSupabaseData(user: User | null) {
         .sort((a, b) => (b.views + b.likes) - (a.views + a.likes))
         .slice(0, 15);
       setTrendingSongs(trending);
-      console.log('✅ Trending songs:', trending.map(s => `${s.name} (${s.views} views, ${s.likes} likes)`));
+      console.log('Trending songs:', trending.map(s => `${s.name} (${s.views} views, ${s.likes} likes)`));
 
       // Set last played song as before
       const { data: userData } = await supabase
@@ -287,10 +290,8 @@ export function useSupabaseData(user: User | null) {
         }
       }
     } catch (error) {
-      console.error('❌ Error fetching songs:', error)
+      console.error('Error fetching songs:', error)
       setSongs([])
-      setPersonalizedSongs([])
-      setTrendingSongs([])
     }
   }
 
@@ -433,7 +434,6 @@ export function useSupabaseData(user: User | null) {
   // Fetch recently played songs based on listening history
   const fetchRecentlyPlayed = async () => {
     if (!user) {
-      console.log('🔄 No user, skipping recently played fetch...')
       setRecentlyPlayedSongs([])
       return
     }
@@ -452,7 +452,7 @@ export function useSupabaseData(user: User | null) {
         .limit(9)
 
       if (historyError) {
-        console.error('❌ Error fetching recently played:', historyError)
+        console.error('Error fetching recently played:', historyError)
         return
       }
 
@@ -481,9 +481,8 @@ export function useSupabaseData(user: User | null) {
         });
 
       setRecentlyPlayedSongs(recentSongs)
-      console.log('✅ Recently played songs loaded:', recentSongs.length)
     } catch (error) {
-      console.error('❌ Error fetching recently played songs:', error)
+      console.error('Error fetching recently played songs:', error)
       setRecentlyPlayedSongs([])
     }
   }
@@ -491,7 +490,6 @@ export function useSupabaseData(user: User | null) {
   // Fetch user playlists
   const fetchPlaylists = async () => {
     if (!user) {
-      console.log('🔄 No user, skipping playlists fetch...')
       setPlaylists([])
       return
     }
@@ -525,9 +523,8 @@ export function useSupabaseData(user: User | null) {
       }) || []
 
       setPlaylists(convertedPlaylists)
-      console.log('✅ Playlists loaded:', convertedPlaylists.length)
     } catch (error) {
-      console.error('❌ Error fetching playlists:', error)
+      console.error('Error fetching playlists:', error)
     }
   }
 
@@ -575,17 +572,19 @@ export function useSupabaseData(user: User | null) {
     }
 
     // Update songs state
-    setSongs(prevSongs =>
-      prevSongs.map(song =>
-        song.id === songId
-          ? {
-              ...song,
-              isLiked: !isCurrentlyLiked,
-              likes: song.likes + (isCurrentlyLiked ? -1 : 1),
-            }
-          : song
-      )
-    );
+    // Update songs state
+setSongs(prevSongs =>
+  prevSongs.map(song =>
+    song.id === songId
+      ? {
+          ...song,
+          isLiked: !isCurrentlyLiked,
+          likes: song.likes + (isCurrentlyLiked ? -1 : 1),
+        }
+      : song
+  )
+);
+
 
     // Update playlists state
     setPlaylists(prevPlaylists =>
@@ -603,9 +602,10 @@ export function useSupabaseData(user: User | null) {
       }))
     );
   } catch (error) {
-    console.error('❌ Error toggling like:', error);
+    console.error('Error toggling like:', error);
   }
 };
+
 
   // Create playlist
   const createPlaylist = async (name: string) => {
@@ -633,7 +633,7 @@ export function useSupabaseData(user: User | null) {
 
       setPlaylists(prev => [...prev, newPlaylist])
     } catch (error) {
-      console.error('❌ Error creating playlist:', error)
+      console.error('Error creating playlist:', error)
     }
   }
 
@@ -652,7 +652,7 @@ export function useSupabaseData(user: User | null) {
 
       setPlaylists(prev => prev.filter(playlist => playlist.id !== playlistId))
     } catch (error) {
-      console.error('❌ Error deleting playlist:', error)
+      console.error('Error deleting playlist:', error)
     }
   }
 
@@ -677,7 +677,7 @@ export function useSupabaseData(user: User | null) {
         )
       )
     } catch (error) {
-      console.error('❌ Error renaming playlist:', error)
+      console.error('Error renaming playlist:', error)
     }
   }
 
@@ -713,7 +713,7 @@ export function useSupabaseData(user: User | null) {
         })
       )
     } catch (error) {
-      console.error('❌ Error adding song to playlist:', error)
+      console.error('Error adding song to playlist:', error)
     }
   }
 
@@ -745,7 +745,7 @@ export function useSupabaseData(user: User | null) {
         })
       )
     } catch (error) {
-      console.error('❌ Error removing song from playlist:', error)
+      console.error('Error removing song from playlist:', error)
     }
   }
 
@@ -761,7 +761,7 @@ export function useSupabaseData(user: User | null) {
 
       if (error) throw error
     } catch (error) {
-      console.error('❌ Error updating last song:', error)
+      console.error('Error updating last song:', error)
     }
   }
 
@@ -789,10 +789,11 @@ export function useSupabaseData(user: User | null) {
           console.log(`✅ History updated: +${minutes} mins for song ${currentSongRef.current}`);
         }
       } catch (error) {
-        console.error('❌ Error recording previous song history:', error);
+        console.error('Error recording previous song history:', error);
       }
     }
   }
+
 
     // Set new song as current
     currentSongRef.current = songId
@@ -803,7 +804,7 @@ export function useSupabaseData(user: User | null) {
 try {
   await supabase.rpc('increment_song_views', { song_file_id: parseInt(songId) });
 } catch (error) {
-  console.error('❌ Error incrementing song views:', error);
+  console.error('Error incrementing song views:', error);
 }
 
   }
@@ -829,7 +830,7 @@ try {
       console.log(`🛑 History updated on stop: +${minutes} mins for song ${currentSongRef.current}`);
     }
   } catch (error) {
-    console.error('❌ Error recording final song history:', error);
+    console.error('Error recording final song history:', error);
   }
 }
 
@@ -840,13 +841,14 @@ try {
   }
 
   useEffect(() => {
-    // Prevent multiple simultaneous loads
-    if (loadingRef.current) return
-    
     const loadData = async () => {
+      const userId = user?.id
+      
       // Reset data when user logs out
-      if (!user) {
-        console.log('🔄 No user, resetting data...')
+      if (!userId) {
+        if (globalDataState.lastUserId) {
+          console.log('🔄 User logged out, resetting data...')
+        }
         // Reset data when user logs out
         songsCache.current = null
         likedSongsCache.current = null
@@ -858,20 +860,34 @@ try {
         setRecentlyPlayedSongs([])
         setLastPlayedSong(null)
         setLoading(false)
-        setDataInitialized(true)
+        setDataInitialized(false)
+        globalDataState.lastUserId = null
+        globalDataState.isLoading = false
+        return
+      }
+
+      // Prevent multiple simultaneous loads for the same user
+      if (loadingRef.current || globalDataState.isLoading) {
+        console.log('🔄 Data load already in progress, skipping...')
+        return
+      }
+      
+      // Skip if data is already loaded for this user
+      if (globalDataState.lastUserId === userId && dataInitialized && !loading) {
+        console.log('🔄 Data already loaded for user, skipping...')
         return
       }
 
       try {
         console.log('🔄 Loading data for user:', user.email)
         loadingRef.current = true
+        globalDataState.isLoading = true
+        globalDataState.lastUserId = userId
         setLoading(true)
-        setDataInitialized(false)
-        
         await Promise.all([fetchSongs(), fetchPlaylists(), fetchRecentlyPlayed()])
         console.log('✅ Data loaded successfully')
       } catch (error) {
-        console.error('❌ Error loading data:', error)
+        console.error('Error loading data:', error)
         // Reset data on error
         setSongs([])
         setPersonalizedSongs([])
@@ -884,11 +900,12 @@ try {
         setLoading(false)
         setDataInitialized(true)
         loadingRef.current = false
+        globalDataState.isLoading = false
       }
     }
 
     loadData()
-  }, [user?.id]) // Only depend on user.id to avoid unnecessary re-runs
+  }, [user?.id]) // Only depend on user ID to prevent unnecessary re-runs
 
   return {
     songs, // all songs
@@ -908,11 +925,9 @@ try {
     recordListeningHistory,
     stopCurrentSongTracking,
     refreshData: () => {
-      if (user && !loadingRef.current) {
-        fetchSongs()
-        fetchPlaylists()
-        fetchRecentlyPlayed()
-      }
+      fetchSongs()
+      fetchPlaylists()
+      fetchRecentlyPlayed()
     },
     getPersonalizedSongs,
     getSmartPersonalizedSongs
