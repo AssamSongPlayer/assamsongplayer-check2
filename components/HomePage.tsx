@@ -1,8 +1,8 @@
-import { useTheme , useState } from '@/components/ThemeContext';
+import { useTheme } from '@/components/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Song } from '@/types';
 import { Music, Plus, TrendingUp } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react'; // ✅ Added useState here
 import SongCard from './SongCard';
 import TrendingSong from './TrendingSong';
 
