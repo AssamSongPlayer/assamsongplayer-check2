@@ -1,4 +1,4 @@
-import { useTheme } from '@/components/ThemeContext';
+import { useTheme , useState } from '@/components/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Song } from '@/types';
 import { Music, Plus, TrendingUp } from 'lucide-react';
