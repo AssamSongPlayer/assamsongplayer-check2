@@ -325,7 +325,8 @@ export function useSupabaseData(user: User | null) {
       console.log('✅ Set all songs:', convertedSongs.length)
 
       // Filter out songs in history for personalized sort
-      const filteredSongs = convertedSongs.filter(song => !historySongIds.has(song.id));
+    const filteredSongs = convertedSongs.filter((song: Song) => !historySongIds.has(song.id));
+
 
       // Score songs by tag/artist match
       const scoredSongs = filteredSongs.map(song => {
