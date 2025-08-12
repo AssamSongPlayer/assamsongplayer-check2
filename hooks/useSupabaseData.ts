@@ -316,9 +316,10 @@ export function useSupabaseData(user: User | null) {
       const historySongIds = new Set(historyData.map(h => h.song_id?.toString()));
 
       // Convert all songs
-      const convertedSongs = songsData?.map(song =>
-        convertDatabaseSong(song, userLikedSongs.has(song.file_id))
-      ) || [];
+     const convertedSongs = songsData?.map((song: DatabaseSong) =>
+  convertDatabaseSong(song, userLikedSongs.has(song.file_id))
+) || [];
+
 
       setSongs(convertedSongs); // songs is now all songs, not personalized
       console.log('✅ Set all songs:', convertedSongs.length)
