@@ -24,7 +24,7 @@ interface HomePageProps {
 const HomePage: React.FC<HomePageProps> = ({ songs, trendingSongs, onSongPlay, formatNumber, onAddToPlaylist, onAddToQueue, imageUrls, onLoadMore, hasMoreSongs, recentlyPlayedSongs }) => {
   const { isDarkMode } = useTheme();
   const { user } = useAuth();
-  
+   const [loading, setLoading] = useState(true);
 
   // Dynamic greeting based on time
   const getGreeting = () => {
