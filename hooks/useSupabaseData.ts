@@ -243,7 +243,9 @@ export function useSupabaseData(user: User | null) {
         if (likedError) {
           console.error('❌ Error fetching liked songs:', likedError)
         } else if (likedData) {
-          userLikedSongs = new Set(likedData.map(item => item.song_id))
+          userLikedSongs = new Set(
+  likedData.map((item: { song_id: string }) => item.song_id)
+);
           setLikedSongs(userLikedSongs)
           console.log('✅ Fetched liked songs:', userLikedSongs.size)
         }
